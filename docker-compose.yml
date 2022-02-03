@@ -1,13 +1,28 @@
 version: "3.7"
 
 services:
-   
+
+  #Rabbit Mq
+  #http://localhost:15672/
+  rabbit-mq:
+    image: rabbitmq:3.8.14-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    networks:
+      - stack1-network    
+
   #Distributed Tracing
   #http://localhost:9411/
   zipkin-server:
     image: openzipkin/zipkin:2.23.2
     ports:
       - 9411:9411
+    restart: always
+    depends_on:
+      - rabbit-mq
+    environment:
+      RABBIT_URI: amqp://guest:guest@rabbit-mq:5672
     networks:
       - stack1-network  
 
@@ -44,6 +59,81 @@ services:
     restart: unless-stopped
     networks:
       - stack1-network
+      
+  #Eureka Server
+  #http://localhost:8761/
+  naming-server:
+    image: carlosmedeiroslima/naming-server:0.0.1-SNAPSHOT
+    ports:
+      - 8761:8761
+    networks:
+      - stack1-network
+      
+  #Api Gateway
+  api-gateway:
+    image: carlosmedeiroslima/api-gateway:0.0.1-SNAPSHOT
+    ports:
+      - 8765:8765
+    depends_on:
+      - naming-server
+      - rabbit-mq
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411/
+      RABBIT_URI: amqp://guest:guest@rabbit-mq:5672
+      SPRING_RABBITMQ_HOST: rabbit-mq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+    networks:
+      - stack1-network
+      
+  #Cambio Service
+  cambio-service:
+    image: carlosmedeiroslima/cambio-service:0.0.1-SNAPSHOT
+    restart: always
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411/
+      RABBIT_URI: amqp://guest:guest@rabbit-mq:5672
+      SPRING_RABBITMQ_HOST: rabbit-mq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+      SPRING.DATASOURCE.URL: jdbc:postgresql://postgres_cambio:5432/cambio_service
+      SPRING.DATASOURCE.USERNAME: cambio
+      SPRING.DATASOURCE.PASSWORD: cambio
+    ports:
+      - 8000:8000
+    depends_on:
+      - naming-server
+      - postgres_cambio
+      - rabbit-mq
+    networks:
+      - stack1-network
+      
+  #Book Service
+  book-service:
+    image: carlosmedeiroslima/book-service:0.0.1-SNAPSHOT
+    restart: always
+    #build:
+      #context: .
+      #dockerfile: caminhoapartir do ponto
+    environment:
+      EUREKA.CLIENT.SERVICEURL.DEFAULTZONE: http://naming-server:8761/eureka
+      SPRING.ZIPKIN.BASEURL: http://zipkin-server:9411/
+      RABBIT_URI: amqp://guest:guest@rabbit-mq:5672
+      SPRING_RABBITMQ_HOST: rabbit-mq
+      SPRING_ZIPKIN_SENDER_TYPE: rabbit
+      SPRING.DATASOURCE.URL: jdbc:postgresql://postgres_book:5432/cambio_service
+      SPRING.DATASOURCE.USERNAME: book
+      SPRING.DATASOURCE.PASSWORD: book
+    ports:
+      - 8100:8100
+    depends_on:
+      - naming-server
+      - postgres_book
+      - rabbit-mq
+    networks:
+      - stack1-network
+      
+
 
 networks:
   stack1-network:
