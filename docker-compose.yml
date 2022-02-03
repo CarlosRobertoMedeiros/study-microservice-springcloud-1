@@ -1,0 +1,53 @@
+version: "3.7"
+
+services:
+   
+  #Distributed Tracing
+  #http://localhost:9411/
+  zipkin-server:
+    image: openzipkin/zipkin:2.23.2
+    ports:
+      - 9411:9411
+    networks:
+      - stack1-network  
+
+  #DataBase 1
+  postgres_cambio:
+    container_name: postgres_cambio_service
+    image: postgres:12.2
+    environment:
+      DATABASE_HOST: localhost
+      POSTGRES_DB: cambio_service
+      POSTGRES_USER: cambio
+      POSTGRES_PASSWORD: cambio
+    volumes:
+      - ./docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped      
+    networks:
+      - stack1-network
+    
+  #DataBase 2
+  postgres_book:
+    container_name: postgres_book_service
+    image: postgres:12.2
+    environment:
+      DATABASE_HOST: localhost
+      POSTGRES_DB: book_service
+      POSTGRES_USER: book
+      POSTGRES_PASSWORD: book
+    volumes:
+      - ./docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_2_init.sql
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    networks:
+      - stack1-network
+
+networks:
+  stack1-network:
+    driver: bridge  
+    
+    
+ 

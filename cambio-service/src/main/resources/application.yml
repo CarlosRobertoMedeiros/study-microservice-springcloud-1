@@ -1,0 +1,39 @@
+server:
+  port: 8000
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+spring:
+  application:
+    name: CAMBIO-SERVICE
+  
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/cambio_service
+    username: cambio
+    password: cambio
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  
+  flyway:
+    locations: classpath:db/migration
+
+  sleuth:
+    sampler:
+      probability:  1.0 #100% rastreado
+  #zipkin:
+  #  base-url: http://localhost:9411 #Usando a config default não precisa expor
+ 
+springdoc:
+  #show-actuator: true
+  api-docs:
+    path: cambio-service/v3/api-docs
