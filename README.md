@@ -7,7 +7,6 @@
 	- Carlos Roberto Medeiros de Lima
 	
 <p align="center">
-  <img src= "https://github.com/CarlosRobertoMedeiros/study-microservice-springcloud-1/blob/master/design_pattern_gof_relation.gif" />
+  <img src= "https://github.com/CarlosRobertoMedeiros/study-microservice-springcloud-1/blob/master/SpringCloud1.png" />
 </p>
-	
 
